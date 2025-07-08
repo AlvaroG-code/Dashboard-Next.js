@@ -36,8 +36,12 @@ const getPokemon = async (id: string): Promise<Pokemons> => {
     }
 };
 
-export default async function PokemonPage(props: any) {
-    const { params } = props;
+interface PokemonPageProps {
+    params: { id: string } | Promise<{ id: string }>;
+}
+
+export default async function PokemonPage(props: PokemonPageProps) {
+    const params = await props.params;
     const pokemon = await getPokemon(params.id);
 
     return (
