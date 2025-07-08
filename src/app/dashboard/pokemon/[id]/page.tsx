@@ -1,49 +1,50 @@
-import { Pokemons } from "@/pokemons/interfaces/pokemons";
-import { get } from "http";
+// app/dashboard/pokemon/[id]/page.tsx
+
 import { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-
-interface Props {
-    params: {
-        id: string;
-    };
-}
+import { Pokemons } from "@/pokemons/interfaces/pokemons";
 
 export async function generateStaticParams() {
-    const static151Pokemons = Array.from({ length: 151 }).map(
-        (v, i) => `${1 + i}`
-    );
-
-    return static151Pokemons.map((id) => ({
-        id,
+    const static151Pokemons = Array.from({ length: 151 }).map((_, i) => ({
+        id: `${i + 1}`,
     }));
+    return static151Pokemons;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+    params,
+}: {
+    params: { id: string };
+}): Promise<Metadata> {
     const { name, id } = await getPokemon(params.id);
 
     return {
         title: `#${id} - ${name}`,
-        description: `Detallles acerca del Pokémon ${name}`,
+        description: `Detalles acerca del Pokémon ${name}`,
     };
 }
 
+// Removed duplicate default export Page function to avoid multiple default exports error.
+
 const getPokemon = async (id: string): Promise<Pokemons> => {
     try {
-        const pokemon = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-        cache: "force-cache"; // This will cache the response for subsequent requests
-        next: {
-            revalidate: 60 * 60 * 30 * 6; // Revalidate every 6 months
-        }
-        if (!pokemon.ok) throw new Error("Failed to fetch Pokémon");
-        return pokemon.json();
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`, {
+            cache: "force-cache",
+            next: { revalidate: 60 * 60 * 24 * 30 },
+        });
+        if (!res.ok) throw new Error("Error al obtener el Pokémon");
+        return res.json();
     } catch (error) {
         notFound();
     }
 };
 
-export default async function PokemonPage({ params }: Props) {
+export default async function PokemonPage({
+    params,
+}: {
+    params: { id: string };
+}) {
     const pokemon = await getPokemon(params.id);
 
     return (
